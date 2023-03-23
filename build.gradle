@@ -1,5 +1,30 @@
 plugins {
     id 'com.android.library'
+    id 'maven-publish'
+}
+
+afterEvaluate {
+    publishing {
+        repositories {
+            maven {
+                url = uri("https://maven.pkg.github.com/lgygg/util")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
+
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                from components.release
+                groupId = this.group
+                artifactId = 'util'
+                version = '1.0.0'
+            }
+        }
+    }
 }
 
 android {
