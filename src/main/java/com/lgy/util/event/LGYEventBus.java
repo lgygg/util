@@ -20,18 +20,16 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
- * 1.注册事件
- *         LGYEventBus.getInstance().register(String.class);
- * 2.监听事件
- *         disposable = LGYEventBus.getInstance().toObservable(String.class, new Consumer<String>() {
- *             @Override
- *             public void accept(String s) throws Throwable {
- *                 Log.d(tag, "accept: "+s);
- *             }
- *         });
- * 3.发送事件
- *         LGYEventBus.getInstance().post(String.class,"test ReplayRelay--message from MainActivity",LGYEventBus.TYPE_REPLAY_RELAY);
- * 4.反注册事件
+ * 1.监听事件
+ * disposable = LGYEventBus.getInstance().toObservable(String.class, new Consumer<String>() {
+ *
+ * @Override public void accept(String s) throws Throwable {
+ * Log.d(tag, "accept: "+s);
+ * }
+ * });
+ * 2.发送事件
+ * LGYEventBus.getInstance().post(String.class,"test ReplayRelay--message from MainActivity",LGYEventBus.TYPE_REPLAY_RELAY);
+ * 3.反注册事件
  * LGYEventBus.getInstance().unRegister(disposable);
  * 或
  * 注销ReplayRelay类型的监听，ReplayRelay监听如果不注销，会收到两次信息
@@ -81,12 +79,13 @@ public class LGYEventBus {
 
     /**
      * 发送消息
+     *
      * @param eventType
      * @param object
      * @param busType
      * @param <T>
      */
-    public <T> void post(@NonNull Class<T> eventType, @NonNull T object,byte busType) {
+    public <T> void post(@NonNull Class<T> eventType, @NonNull T object, byte busType) {
         if (mSubjects.isEmpty()) {
             Relay<Object> bus = createBus(busType);
             mSubjects.put(eventType, bus);
@@ -102,33 +101,18 @@ public class LGYEventBus {
 
     /**
      * 发送消息
+     *
      * @param eventType
      * @param object
      * @param <T>
      */
     public <T> void post(@NonNull Class<T> eventType, @NonNull T object) {
-        post(eventType,object,defaultType);
-    }
-
-    /**
-     * 注册TYPE_PUBLISH_RELAY事件
-     * @param eventType
-     * @param <T>
-     * @return
-     */
-    public <T> Observable<T> register(Class<T> eventType) {
-        Relay<Object> bus = null;
-        if (mSubjects.containsKey(eventType)) {
-            bus = mSubjects.get(eventType);
-        } else {
-            bus = createBus(defaultType);
-            mSubjects.put(eventType, bus);
-        }
-        return bus.ofType(eventType);
+        post(eventType, object, defaultType);
     }
 
     /**
      * 注册事件
+     *
      * @param eventType
      * @param relayType
      * @param <T>
@@ -146,7 +130,14 @@ public class LGYEventBus {
     }
 
     public <T> Disposable toObservable(Class<T> eventType, Consumer<T> onNext) {
-        return register(eventType)
+        return register(eventType, defaultType)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(onNext);
+    }
+
+    public <T> Disposable toObservable(Class<T> eventType, Consumer<T> onNext, byte relayType) {
+        return register(eventType, relayType)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(onNext);
@@ -154,11 +145,23 @@ public class LGYEventBus {
 
     public <T> Disposable toObservable(
             Class<T> eventType, Scheduler subScheduler, Scheduler obsScheduler, Consumer<T> onNext) {
-        return register(eventType).subscribeOn(subScheduler).observeOn(obsScheduler).subscribe(onNext);
+        return register(eventType, defaultType).subscribeOn(subScheduler).observeOn(obsScheduler).subscribe(onNext);
+    }
+
+    public <T> Disposable toObservable(
+            Class<T> eventType, byte relayType, Scheduler subScheduler, Scheduler obsScheduler, Consumer<T> onNext) {
+        return register(eventType, relayType).subscribeOn(subScheduler).observeOn(obsScheduler).subscribe(onNext);
     }
 
     public <T> Disposable toObservable(Class<T> eventType, Consumer<T> onNext, Consumer onError) {
-        return register(eventType)
+        return register(eventType, defaultType)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(onNext, onError);
+    }
+
+    public <T> Disposable toObservable(Class<T> eventType, byte relayType, Consumer<T> onNext, Consumer onError) {
+        return register(eventType, relayType)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(onNext, onError);
@@ -170,7 +173,20 @@ public class LGYEventBus {
             Scheduler obsScheduler,
             Consumer<T> onNext,
             Consumer onError) {
-        return register(eventType)
+        return register(eventType, defaultType)
+                .subscribeOn(subScheduler)
+                .observeOn(obsScheduler)
+                .subscribe(onNext, onError);
+    }
+
+    public <T> Disposable toObservable(
+            Class<T> eventType,
+            byte relayType,
+            Scheduler subScheduler,
+            Scheduler obsScheduler,
+            Consumer<T> onNext,
+            Consumer onError) {
+        return register(eventType, relayType)
                 .subscribeOn(subScheduler)
                 .observeOn(obsScheduler)
                 .subscribe(onNext, onError);
@@ -178,7 +194,15 @@ public class LGYEventBus {
 
     public <T> Disposable toObservable(
             Class<T> eventType, Consumer<T> onNext, Consumer onError, Action onComplete) {
-        return register(eventType)
+        return register(eventType, defaultType)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(onNext, onError, onComplete);
+    }
+
+    public <T> Disposable toObservable(
+            Class<T> eventType, byte relayType, Consumer<T> onNext, Consumer onError, Action onComplete) {
+        return register(eventType, relayType)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(onNext, onError, onComplete);
@@ -191,15 +215,28 @@ public class LGYEventBus {
             Consumer<T> onNext,
             Consumer onError,
             Action onComplete) {
-        return register(eventType)
+        return register(eventType,defaultType)
+                .subscribeOn(subScheduler)
+                .observeOn(obsScheduler)
+                .subscribe(onNext, onError, onComplete);
+    }
+    public <T> Disposable toObservable(
+            Class<T> eventType,
+            byte relayType,
+            Scheduler subScheduler,
+            Scheduler obsScheduler,
+            Consumer<T> onNext,
+            Consumer onError,
+            Action onComplete) {
+        return register(eventType,relayType)
                 .subscribeOn(subScheduler)
                 .observeOn(obsScheduler)
                 .subscribe(onNext, onError, onComplete);
     }
 
-
     /**
      * 是否有被观察
+     *
      * @param type
      * @param <T>
      * @return
@@ -211,7 +248,7 @@ public class LGYEventBus {
                 if (key.getName().equals(type.getName())) {
                     Relay<Object> bus = mSubjects.get(key);
                     if (bus != null) {
-                        result =  bus.hasObservers();
+                        result = bus.hasObservers();
                         break;
                     }
                 }
@@ -222,6 +259,7 @@ public class LGYEventBus {
 
     /**
      * 注销监听
+     *
      * @param disposable
      */
     public void unRegister(Disposable disposable) {
@@ -232,10 +270,10 @@ public class LGYEventBus {
 
     /**
      * 注销ReplayRelay类型的监听，ReplayRelay监听如果不注销，会收到两次信息
+     *
      * @param disposable
      */
-    public void unRegisterReplayRelay(Disposable disposable,Class<?> eventType) {
-        Log.e("LGY","isObserver:"+isObserver(eventType));
+    public void unRegisterReplayRelay(Disposable disposable, Class<?> eventType) {
         if (mSubjects != null) {
             mSubjects.remove(eventType);
         }
