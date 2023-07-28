@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
@@ -39,7 +40,7 @@ public class PhotoUtil {
      * @param imageMaxSize 压缩目标：例如，如果值设为100，意思就是压缩的图片大小小于100k
      */
     @SuppressLint("NewApi")
-    public static File scal(String path, String savePath, int imageMaxSize) {
+    public static File scale(String path, String savePath, int imageMaxSize) {
         if (path == null || path.isEmpty()) {
             return null;
         }
@@ -322,7 +323,7 @@ public class PhotoUtil {
      * @param angle : 角度（90，180,...)
      * @return
      */
-    public static Bitmap rotaingBitmap(Bitmap bitmap, int angle)
+    public static Bitmap rotatingBitmap(Bitmap bitmap, int angle)
     {
         try
         {
@@ -381,5 +382,27 @@ public class PhotoUtil {
             bitmap.recycle();
         }
         return newbmp;
+    }
+
+    /**
+     *
+     * @param background 背景图
+     * @param foreground 前景图
+     * @return
+     */
+    public static Bitmap combineBitmap(Bitmap background, Bitmap foreground,int x,int y) {
+        if (background == null) {
+            return null;
+        }
+        int bgWidth = background.getWidth();
+        int bgHeight = background.getHeight();
+        Bitmap newBitmap = Bitmap.createBitmap(bgWidth, bgHeight, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(newBitmap);
+        canvas.drawBitmap(background, 0, 0, null);
+
+        canvas.drawBitmap(foreground, x, y, null);
+        canvas.save();
+        canvas.restore();
+        return newBitmap;
     }
 }
